@@ -9,18 +9,25 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
     private val sendButton: Button by lazy { findViewById<Button>(R.id.sendButton) }
     private val questionField: EditText by lazy { findViewById<EditText>(R.id.questionField) }
-    private val chatWindow: TextView by lazy { findViewById<TextView>(R.id.chatWindow) }
+    private lateinit var chatMessgeList: RecyclerView
+    protected var messageListAdapter: MessageListAdapter = MessageListAdapter()
 
     lateinit var textToSpeech: TextToSpeech
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        chatMessgeList = findViewById(R.id.chatMessageList)
+        chatMessgeList.layoutManager = LinearLayoutManager(this)
+        chatMessgeList.adapter = messageListAdapter
 
         sendButton.setOnClickListener {
             onSend()
@@ -37,12 +44,15 @@ class MainActivity : AppCompatActivity() {
     private fun onSend() {
         val text = questionField.text.toString()
         val answer = AI().getAnswer(text)
-        chatWindow.append(">> $text\n")
-        chatWindow.append("<< $answer\n")
+        messageListAdapter.messageList.add(Message(text, isSend = true))
+
+        messageListAdapter.messageList.add(Message(answer, isSend = false))
+        //textToSpeech.speak(answer, TextToSpeech.QUEUE_FLUSH, null, null)
 
         questionField.text.clear()
+        messageListAdapter.notifyDataSetChanged()
 
-        //textToSpeech.speak(answer, TextToSpeech.QUEUE_FLUSH, null, null)
+        chatMessgeList.scrollToPosition(messageListAdapter.messageList.size - 1)
 
         dismissKeyboard()
     }

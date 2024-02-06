@@ -2,4 +2,6 @@
     <string name="app_name">VoiceAssistent</string>
     <string name="questionHint">Задайте вопрос</string>
     <string name="sendButtonText">Отправить</string>
+    <string name="userName">Пользователь</string>
+    <string name="assistentName">Ассистент</string>
 </resources>

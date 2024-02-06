@@ -3,4 +3,6 @@
     <string name="app_nameEn">VoiceAssistent</string>
     <string name="questionHintEn">Ask a question</string>
     <string name="sendButtonTextEn">Send</string>
+    <string name="userNameEn">User</string>
+    <string name="assistentNameEn">Assistent</string>
 </resources>

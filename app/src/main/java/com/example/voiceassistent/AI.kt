@@ -28,6 +28,8 @@ class AI {
         "Какой сегодня день" to getTimeAnswer(timeAnswer.day, "null"),
         "Который час" to getTimeAnswer(timeAnswer.hour, "null"),
         "Какой день недели" to getTimeAnswer(timeAnswer.dayOfWeek, "null"),
+        "Йоу" to "Ты шизик? Окстись!!",
+        "Хи" to "Иди поспи)))"
     )
 
     fun getAnswer(text: String): String {
