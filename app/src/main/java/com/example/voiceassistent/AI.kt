@@ -1,14 +1,11 @@
 package com.example.voiceassistent
 
 import java.text.SimpleDateFormat
-import java.time.LocalDate
-import java.time.Period
-import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-import java.util.concurrent.atomic.LongAccumulator
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 class AI {
     enum class timeAnswer {
@@ -32,17 +29,37 @@ class AI {
         "Хи" to "Иди поспи)))"
     )
 
-    fun getAnswer(text: String): String {
-        var result: String? = null
+    fun getAnswer(text: String, answerCallBack: (String) -> Unit) {
+        var result: MutableList<String> = ArrayList()
+
+        val cityPattern: Pattern =
+            Pattern.compile("погода в городе (\\p{L}+)", Pattern.CASE_INSENSITIVE)
+        val matcher: Matcher = cityPattern.matcher(text)
+        if (matcher.find()) {
+            val cityName: String = matcher.group(1)
+            ForecastToString().getForecast(cityName) {
+                result.add(it)
+                answerCallBack.invoke(result.last())
+            }
+            result.add("Я не знаю какая погода в городе $cityName")
+        }
+
         for ((x, y) in answers) {
             if (text.contains("сколько дней до", ignoreCase = true)) {
-                result = getTimeAnswer(timeAnswer.timeToDay, text.substring(text.lastIndexOf(" ") + 1))
+                result.add(
+                    getTimeAnswer(
+                        timeAnswer.timeToDay,
+                        text.substring(text.lastIndexOf(" ") + 1)
+                    )
+                )
+            } else if (text.contains(x, ignoreCase = true)) {
+                result.add(y)
             }
-            else if (text.contains(x, ignoreCase = true))
-                result = y
         }
-        if (result == null) return "Вопрос понял. Думаю..."
-        else return result
+        if (result.isEmpty()) {
+            result.add("Вопрос понял. Думаю...")
+        }
+        answerCallBack.invoke(result.last())
     }
 
     private fun getTimeAnswer(type: Enum<timeAnswer>, date: String): String {
@@ -53,33 +70,35 @@ class AI {
             }
 
             timeAnswer.hour -> {
-                return android.text.format.DateFormat.format("HH:mm", Calendar.getInstance()).toString()
+                return android.text.format.DateFormat.format("HH:mm", Calendar.getInstance())
+                    .toString()
             }
 
             timeAnswer.dayOfWeek -> {
-                return android.text.format.DateFormat.format("EEEE", Calendar.getInstance()).toString()
+                return android.text.format.DateFormat.format("EEEE", Calendar.getInstance())
+                    .toString()
             }
 
             timeAnswer.timeToDay -> {
-                    val targetDate = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).parse(date)
-                    if (targetDate != null) {
-                        val currentDate = Date()
-                        val differenceInMillis = targetDate!!.time - currentDate.time
-                        val daysDifference = differenceInMillis / (24 * 60 * 60 * 1000)
+                val targetDate = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).parse(date)
+                if (targetDate != null) {
+                    val currentDate = Date()
+                    val differenceInMillis = targetDate!!.time - currentDate.time
+                    val daysDifference = differenceInMillis / (24 * 60 * 60 * 1000)
 
-                        return if (daysDifference >= 0) {
-                            "До ${
-                                SimpleDateFormat(
-                                    "dd.MM.yyyy",
-                                    Locale.getDefault()
-                                ).format(targetDate!!)
-                            } осталось $daysDifference дней"
-                        } else {
-                            "Уже прошло"
-                        }
+                    return if (daysDifference >= 0) {
+                        "До ${
+                            SimpleDateFormat(
+                                "dd.MM.yyyy",
+                                Locale.getDefault()
+                            ).format(targetDate!!)
+                        } осталось $daysDifference дней"
                     } else {
-                        return "Вы не указали конечную дату. Пожалуйста, уточните дату в формате dd.MM.yyyy."
+                        "Уже прошло"
                     }
+                } else {
+                    return "Вы не указали конечную дату. Пожалуйста, уточните дату в формате dd.MM.yyyy."
+                }
             }
 
             else -> {

@@ -8,7 +8,7 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
-import android.widget.TextView
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.util.Locale
@@ -43,14 +43,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun onSend() {
         val text = questionField.text.toString()
-        val answer = AI().getAnswer(text)
         messageListAdapter.messageList.add(Message(text, isSend = true))
 
-        messageListAdapter.messageList.add(Message(answer, isSend = false))
-        //textToSpeech.speak(answer, TextToSpeech.QUEUE_FLUSH, null, null)
+        AI().getAnswer(text) {
+            messageListAdapter.messageList.add(Message(it, isSend = false))
+            //textToSpeech.speak(answer, TextToSpeech.QUEUE_FLUSH, null, null)
+            messageListAdapter.notifyDataSetChanged()
+        }
 
         questionField.text.clear()
-        messageListAdapter.notifyDataSetChanged()
+
 
         chatMessgeList.scrollToPosition(messageListAdapter.messageList.size - 1)
 
