@@ -1,8 +1,9 @@
-package com.example.voiceassistent
+package com.example.voiceassistent.message
 
 import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.voiceassistent.R
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 

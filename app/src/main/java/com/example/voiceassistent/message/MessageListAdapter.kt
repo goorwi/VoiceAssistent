@@ -1,9 +1,10 @@
-package com.example.voiceassistent
+package com.example.voiceassistent.message
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.example.voiceassistent.R
 
 class MessageListAdapter : RecyclerView.Adapter<MessageViewHolder>() {
     private val ASSISTANT_TYPE = 0

@@ -1,4 +1,4 @@
-package com.example.voiceassistent
+package com.example.voiceassistent.message
 
 import java.util.Date
 

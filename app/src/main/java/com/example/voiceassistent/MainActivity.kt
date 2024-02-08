@@ -8,9 +8,10 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.voiceassistent.message.Message
+import com.example.voiceassistent.message.MessageListAdapter
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {

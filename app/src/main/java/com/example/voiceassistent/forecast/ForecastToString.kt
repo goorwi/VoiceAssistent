@@ -1,7 +1,6 @@
-package com.example.voiceassistent
+package com.example.voiceassistent.forecast
 
 import android.util.Log
-import java.util.function.Consumer
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -16,7 +15,7 @@ class ForecastToString {
                 val result = response.body()
                 if (result != null) {
                     val answer =
-                        "Сейчас где-то ${result.main?.temp} градуса и ${result.weather?.get(0)?.description}"
+                        "Сейчас где-то ${result.temperature?.value} ${getCorrectString(result.temperature?.value)} и ${result.weather?.value}"
                     callback.invoke(answer)
                 } else {
                     callback.invoke("Не могу узнать погоду")
@@ -27,5 +26,27 @@ class ForecastToString {
                 Log.w("WEATHER", t.message.toString())
             }
         })
+    }
+
+    fun getCorrectString(temp: String?): String {
+        if (temp != null) {
+            return if (temp.contains(".")) {
+                "градуса"
+            } else {
+                val lastNum = temp[temp.lastIndex].digitToInt()
+                when (lastNum) {
+                    1 -> {
+                        "градус"
+                    }
+                    in 2..4 -> {
+                        "градуса"
+                    }
+                    else -> {
+                        "градусов"
+                    }
+                }
+            }
+        }
+        else return "градусов"
     }
 }

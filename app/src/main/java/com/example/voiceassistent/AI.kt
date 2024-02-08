@@ -1,5 +1,7 @@
 package com.example.voiceassistent
 
+import com.example.voiceassistent.cityinformation.CityToString
+import com.example.voiceassistent.forecast.ForecastToString
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -32,9 +34,9 @@ class AI {
     fun getAnswer(text: String, answerCallBack: (String) -> Unit) {
         var result: MutableList<String> = ArrayList()
 
-        val cityPattern: Pattern =
+        val weatherPattern: Pattern =
             Pattern.compile("погода в городе (\\p{L}+)", Pattern.CASE_INSENSITIVE)
-        val matcher: Matcher = cityPattern.matcher(text)
+        var matcher: Matcher = weatherPattern.matcher(text)
         if (matcher.find()) {
             val cityName: String = matcher.group(1)
             ForecastToString().getForecast(cityName) {
@@ -42,6 +44,35 @@ class AI {
                 answerCallBack.invoke(result.last())
             }
             result.add("Я не знаю какая погода в городе $cityName")
+        }
+
+        val cityPattern: Pattern =
+            Pattern.compile("расскажи о городе (\\p{L}+)", Pattern.CASE_INSENSITIVE)
+        matcher = cityPattern.matcher(text)
+        if (matcher.find()) {
+            val cityName: String = matcher.group(1)
+            CityToString().getCityInformaion(cityName) {
+                if (it != null && it.count() > 5) {
+                    answerCallBack.invoke("Найдена информация о нескольких городах")
+                    for (x in 0..5) {
+                        result.add(it[x])
+                        answerCallBack.invoke(result.last())
+                    }
+                } else if (it != null && it.count() > 1) {
+                    answerCallBack.invoke("Найдена информация о нескольких городах")
+                    for (x in 0..it.size) {
+                        result.add(it[x])
+                        answerCallBack.invoke(result.last())
+                    }
+                } else if (it != null) {
+                    answerCallBack.invoke("Найдена информация о городе")
+                    result.add(it[0])
+                    answerCallBack.invoke(result.last())
+                } else {
+                    result.add("Информация о городе ${cityName} не найдена")
+                    answerCallBack.invoke(result.last())
+                }
+            }
         }
 
         for ((x, y) in answers) {
