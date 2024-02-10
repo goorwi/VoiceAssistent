@@ -14,7 +14,7 @@ class CityToString {
             override fun onResponse(call: Call<CityInformation?>, response: Response<CityInformation?>) {
                 val result = response.body()
                 if (result != null) {
-                    var answer: MutableList<String> = ArrayList()
+                    val answer: MutableList<String> = ArrayList()
                     for (city in result.city?.cityMsgs!!) {
                         answer.add(
                             "Информация о городе ${city.name}\n" +

@@ -1,11 +1,19 @@
 package com.example.voiceassistent
 
+import android.annotation.SuppressLint
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.example.voiceassistent.cityinformation.CityToString
 import com.example.voiceassistent.forecast.ForecastToString
+import com.example.voiceassistent.holidays.ParsingHtmlService
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.core.Scheduler
+import io.reactivex.rxjava3.schedulers.Schedulers
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -28,9 +36,11 @@ class AI {
         "Который час" to getTimeAnswer(timeAnswer.hour, "null"),
         "Какой день недели" to getTimeAnswer(timeAnswer.dayOfWeek, "null"),
         "Йоу" to "Ты шизик? Окстись!!",
-        "Хи" to "Иди поспи)))"
+        "Хи" to "Иди поспи)))",
     )
 
+    @RequiresApi(Build.VERSION_CODES.O)
+    @SuppressLint("CheckResult")
     fun getAnswer(text: String, answerCallBack: (String) -> Unit) {
         var result: MutableList<String> = ArrayList()
 
@@ -44,6 +54,8 @@ class AI {
                 answerCallBack.invoke(result.last())
             }
             result.add("Я не знаю какая погода в городе $cityName")
+        } else {
+
         }
 
         val cityPattern: Pattern =
@@ -69,7 +81,7 @@ class AI {
                     result.add(it[0])
                     answerCallBack.invoke(result.last())
                 } else {
-                    result.add("Информация о городе ${cityName} не найдена")
+                    result.add("Информация о городе $cityName не найдена")
                     answerCallBack.invoke(result.last())
                 }
             }
@@ -85,12 +97,29 @@ class AI {
                 )
             } else if (text.contains(x, ignoreCase = true)) {
                 result.add(y)
+                answerCallBack.invoke(result.last())
             }
         }
-        if (result.isEmpty()) {
+
+        if (text.contains("какой праздник", ignoreCase = true)) {
+            Observable.fromCallable {
+                val answer = ParsingHtmlService().getHoliday(text)
+                result.add(answer)
+                return@fromCallable result
+            }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe {
+                    answerCallBack.invoke(result.last())
+                }
+
+
+        } else if (result.isEmpty()) {
             result.add("Вопрос понял. Думаю...")
+            answerCallBack.invoke(result.last())
         }
-        answerCallBack.invoke(result.last())
+
+
     }
 
     private fun getTimeAnswer(type: Enum<timeAnswer>, date: String): String {
