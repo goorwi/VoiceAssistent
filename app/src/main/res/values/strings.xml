@@ -4,4 +4,6 @@
     <string name="sendButtonText">Отправить</string>
     <string name="userName">Пользователь</string>
     <string name="assistentName">Ассистент</string>
+    <string name="day_settings_name">Дневная тема</string>
+    <string name="night_settings_name">Ночная тема</string>
 </resources>

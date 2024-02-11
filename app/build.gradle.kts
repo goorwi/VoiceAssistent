@@ -47,6 +47,7 @@ dependencies {
     implementation("org.jsoup:jsoup:1.12.1")
     implementation("io.reactivex.rxjava3:rxkotlin:3.0.0")
     implementation("io.reactivex.rxjava3:rxandroid:3.0.0")
+    implementation("androidx.sqlite:sqlite:2.4.0")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
