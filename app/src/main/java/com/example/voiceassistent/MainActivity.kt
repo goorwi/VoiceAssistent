@@ -9,7 +9,6 @@ import android.database.sqlite.SQLiteDatabase
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.view.Menu
@@ -40,6 +39,8 @@ class MainActivity : AppCompatActivity() {
     val APP_PREFERENCES = "mysettings"
     private var isLight = true
     private val THEME = "THEME"
+    private var isVolume = true
+    private val VOLUME_ASSISTANT = "VOLUME"
     var dbHelper: DBHelper? = null
     var dataBase: SQLiteDatabase? = null
 
@@ -48,27 +49,58 @@ class MainActivity : AppCompatActivity() {
         return super.onCreateOptionsMenu(menu)
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         Log.i("LOG", "nightModeChanged")
+
         when (item.itemId) {
-            R.id.day_settings -> {
-                delegate.localNightMode = AppCompatDelegate.MODE_NIGHT_NO
-                isLight = true
+            R.id.mode_theme -> {
+                if (isLight) {
+                    delegate.localNightMode = AppCompatDelegate.MODE_NIGHT_YES
+                    isLight = false
+                } else {
+                    delegate.localNightMode = AppCompatDelegate.MODE_NIGHT_NO
+                    isLight = true
+                }
             }
-            R.id.night_settings -> {
-                delegate.localNightMode = AppCompatDelegate.MODE_NIGHT_YES
-                isLight = false
+
+            R.id.voice_btn -> {
+                isVolume = !isVolume
+                if (isVolume) {
+                    item.setIcon(R.drawable.volume_off)
+                } else {
+                    item.setIcon(R.drawable.volume_on)
+                }
+            }
+
+            R.id.clearMessages -> {
+                dataBase?.delete(dbHelper?.TABLE_NAME, null, null)
+                messageListAdapter.messageList.clear()
+                messageListAdapter.notifyDataSetChanged()
+                //fillMessages()
             }
         }
 
         return super.onOptionsItemSelected(item)
     }
 
-    override fun onStop() {
-        val editor: SharedPreferences.Editor = sPref!!.edit()
-        editor.putBoolean(THEME, isLight)
-        editor.apply()
-        dataBase?.delete(dbHelper?.TABLE_NAME, null, null)
+    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        var menuItem = menu?.findItem(R.id.mode_theme)
+        if (isLight) {
+            menuItem?.setIcon(R.drawable.mode_night_theme_icon)
+        } else {
+            menuItem?.setIcon(R.drawable.mode_day_theme_icon)
+        }
+        menuItem = menu?.findItem(R.id.voice_btn)
+        if (isVolume) {
+            menuItem?.setIcon(R.drawable.volume_off)
+        } else {
+            menuItem?.setIcon(R.drawable.volume_on)
+        }
+        return super.onPrepareOptionsMenu(menu)
+    }
+
+    private fun saveMessages() {
         for (i in 0..<messageListAdapter.messageList.size) {
             val entity = MessageEntity(messageListAdapter.messageList[i])
             val contentValues = ContentValues()
@@ -77,6 +109,38 @@ class MainActivity : AppCompatActivity() {
             contentValues.put(dbHelper?.FIELD_DATE, entity.date)
             dataBase?.insert(dbHelper?.TABLE_NAME, null, contentValues)
         }
+    }
+
+    private fun fillMessages() {
+        val cursor: Cursor = dataBase!!.query(
+            dbHelper!!.TABLE_NAME,
+            null, null, null,
+            null, null, null
+        )
+        if (cursor.moveToFirst()) {
+            val messageIndex = cursor.getColumnIndex(dbHelper!!.FIELD_MESSAGE)
+            val dateIndex = cursor.getColumnIndex(dbHelper!!.FIELD_DATE)
+            val sendIndex = cursor.getColumnIndex(dbHelper!!.FIELD_SEND)
+            do {
+                val entity = MessageEntity(
+                    cursor.getString(messageIndex),
+                    cursor.getString(dateIndex),
+                    cursor.getInt(sendIndex) == 1
+                )
+                val message = Message("", Date(), false).getMessage(entity)
+                messageListAdapter.messageList.add(message)
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+    }
+
+    override fun onStop() {
+        val editor: SharedPreferences.Editor = sPref!!.edit()
+        editor.putBoolean(THEME, isLight)
+        editor.putBoolean(VOLUME_ASSISTANT, isVolume)
+        editor.apply()
+        dataBase?.delete(dbHelper?.TABLE_NAME, null, null)
+        saveMessages()
         super.onStop()
     }
 
@@ -86,6 +150,16 @@ class MainActivity : AppCompatActivity() {
         Log.i("LOG", "onCreate")
         sPref = getSharedPreferences(APP_PREFERENCES, MODE_PRIVATE)
         isLight = sPref!!.getBoolean(THEME, true)
+        isVolume = sPref!!.getBoolean(VOLUME_ASSISTANT, true)
+        if (!isLight) {
+            delegate.localNightMode = AppCompatDelegate.MODE_NIGHT_YES
+            isLight = false
+        }
+//        if (isVolume) {
+//
+//        } else {
+//            item.setIcon(R.drawable.volume_on)
+//        }
         dbHelper = DBHelper(this)
         dataBase = dbHelper!!.writableDatabase
         super.onCreate(savedInstanceState)
@@ -96,27 +170,10 @@ class MainActivity : AppCompatActivity() {
         chatMessageList.adapter = messageListAdapter
 
         if (savedInstanceState != null) {
-            messageListAdapter.messageList = savedInstanceState.getSerializable("messageList") as MutableList<Message>
-        }
-        else {
-            val cursor: Cursor = dataBase!!.query(dbHelper!!.TABLE_NAME,
-                null, null, null,
-                null, null, null)
-            if (cursor.moveToFirst()) {
-                val messageIndex = cursor.getColumnIndex(dbHelper!!.FIELD_MESSAGE)
-                val dateIndex = cursor.getColumnIndex(dbHelper!!.FIELD_DATE)
-                val sendIndex = cursor.getColumnIndex(dbHelper!!.FIELD_SEND)
-                do {
-                    val entity = MessageEntity(
-                        cursor.getString(messageIndex),
-                        cursor.getString(dateIndex),
-                        cursor.getInt(sendIndex)==1
-                    )
-                    val message = Message("", Date(),false).getMessage(entity)
-                    messageListAdapter.messageList.add(message)
-                } while (cursor.moveToNext())
-            }
-            cursor.close()
+            messageListAdapter.messageList =
+                savedInstanceState.getSerializable("messageList") as MutableList<Message>
+        } else {
+            fillMessages()
         }
         sendButton.setOnClickListener {
             onSend()
@@ -153,7 +210,9 @@ class MainActivity : AppCompatActivity() {
         AI().getAnswer(text) {
             messageListAdapter.messageList.add(Message(it, isSend = false))
             messageListAdapter.notifyDataSetChanged()
-            //textToSpeech.speak(it, TextToSpeech.QUEUE_FLUSH, null, null)
+            if (isVolume) {
+                textToSpeech.speak(it, TextToSpeech.QUEUE_FLUSH, null, null)
+            }
         }
 
         questionField.text.clear()

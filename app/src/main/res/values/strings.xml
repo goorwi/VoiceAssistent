@@ -6,4 +6,7 @@
     <string name="assistentName">Ассистент</string>
     <string name="day_settings_name">Дневная тема</string>
     <string name="night_settings_name">Ночная тема</string>
+    <string name="change_theme">Изменить тему</string>
+    <string name="voice_on">Включить озвучивание</string>
+    <string name="clearDialog">Очистить диалог</string>
 </resources>
